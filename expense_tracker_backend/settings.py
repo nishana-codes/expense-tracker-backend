@@ -145,6 +145,8 @@ SIMPLE_JWT = {
 }
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://expense-tracker-frontend-sage-chi.vercel.app",
+    
  ]
 CORS_ALLOW_HEADERS = [
     'authorization',
