@@ -8,9 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from .serializer import ExpenseCreateSerializer, ExpenseListSerializer, ExpenseDeleteSerializer
 from .models import Expense
 from dotenv import load_dotenv
-from django.conf import settings
 import os
-import google.generativeai as genai
+from google import genai
 
 load_dotenv()
 
@@ -63,45 +62,20 @@ class ExpenseAiOverviewAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-
         user = request.user
-
         expenses = Expense.objects.filter(user=user)
-
-        data = list(
-            expenses.values(
-                "category",
-                "amount",
-                "created_date",
-                "note"
-            )
-        )
-
+        data = list(expenses.values("category", "amount", "created_date", "note"))
         prompt = f"""
-        Analyse this expense data and give a short summary and advice.
+            Analyse this expense data and give a short summary and advice
 
-        Expense Data:
-        {data}
+            {data}
 
-        Keep it simple and user friendly.
+            keep it simple and user friendly.
         """
-
-        try:
-
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-
-            model = genai.GenerativeModel("gemini-pro")
-
-            response = model.generate_content(prompt)
-
-            return Response(
-                {"message": response.text},
-                status=HTTP_200_OK
-            )
-
-        except Exception as e:
-
-            return Response(
-                {"error": str(e)},
-                status=500
-            )
+        client = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY")
+        )
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", contents=prompt
+        )
+        return Response(response.text, status=HTTP_200_OK)
